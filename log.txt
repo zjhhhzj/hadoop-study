@@ -1,0 +1,114 @@
+#字符问题？
+2024-10-25T11:53:24,860  WARN [main] server.HiveServer2: Error starting HiveServer2 on attempt 11, will retry in 60000ms
+java.lang.RuntimeException: Error applying authorization policy on hive configuration: java.net.URISyntaxException: Relative path in absolute URI: ${system:java.io.tmpdir%7D/$%7Bsystem:user.name%7D
+hadoop:core-stie.xml所有含有${*}的改为绝对路径
+
+
+#root用户验证问题
+Failed to open new session: java.lang.RuntimeException: org.apache.hadoop.ipc.RemoteException(org.apache.hadoop.security.authorize.AuthorizationException): User: root is not allowed to impersonate anonymous (state=08S01,code=0)<em id="__mceDel">Beeline version 3.0.0 by Apache Hive</em>
+hadoop:core-stie.xml增加配置
+<property>
+        <name>hadoop.proxyuser.root.hosts</name>
+        <value>*</value>
+</property>
+<property>
+        <name>hadoop.proxyuser.root.groups</name>
+        <value>*</value>
+</property>
+
+#HS2 interactive HA没有开启
+WARN  [main] server.HiveServer2: Error starting HiveServer2 on attempt 1, will retry in 60000ms<br>java.lang.NoClassDefFoundError: org/apache/tez/dag/api/TezConfiguration<br>    
+hive:core-stie.xml更改配置
+<property>
+    <name>hive.server2.active.passive.ha.enable</name>
+    <value>true</value>
+</property>
+
+# 禁用  HMS 事件通知 API 的认证
+org.apache.thrift.transport.TTransportException: Cannot write to null outputStream
+java.lang.RuntimeException: Error initializing notification event poll
+Caused by: java.io.IOException: org.apache.thrift.TApplicationException: Internal error processing get_current_notificationEventId
+hive:core-stie.xml更改配置
+<property>
+    <name>hive.metastore.event.db.notification.api.auth</name>
+    <value>false</value>
+</property>
+
+#HiveServer2 不允许用户 "root" 模拟
+beeline> !connect jdbc:hive2://master:10000 root 123456
+Connecting to jdbc:hive2://master:10000
+24/10/25 19:13:54 [main]: WARN jdbc.HiveConnection: Failed to connect to master:10000
+Error: Could not open client transport with JDBC Uri: jdbc:hive2://master:10000: Failed to open new session: java.lang.RuntimeException: org.apache.hadoop.ipc.RemoteException(org.apache.hadoop.security.authorize.AuthorizationException): User: root is not allowed to impersonate root (state=08S01,code=0)
+hive:core-stie.xml更改配置
+<property>
+<name>hive.server2.authentication</name>
+<value>NOSASL</value>
+<description>
+  Expects one of [nosasl, none, ldap, kerberos, pam, custom, saml, jwt].
+  Client authentication types.
+    NONE: no authentication check
+    LDAP: LDAP/AD based authentication
+    KERBEROS: Kerberos/GSSAPI authentication
+    CUSTOM: Custom authentication provider
+            (Use with property hive.server2.custom.authentication.class)
+    PAM: Pluggable authentication module
+    NOSASL:  Raw transport
+    SAML: SAML 2.0 compliant authentication. This is only supported in http transport mode.
+    JWT: JWT based authentication. HS2 expects JWT contains the user name as subject and was signed by an
+         asymmetric key. This is only supported in http transport mode.
+    设置为 NOSASL 会禁用 HiveServer2 的身份验证，这会带来极大的安全风险
+</description>
+</property>
+
+
+
+#Thrift协议错误
+2024-10-25T19:19:27,806 ERROR [HiveServer2-Handler-Pool: Thread-59] server.TThreadPoolServer: Thrift Error occurred during processing of message.
+org.apache.thrift.protocol.TProtocolException: Missing version in readMessageBegin, old client?
+10000	HiveServer2 Thrift 接口（默认）	Thrift
+10002	HiveServer2 Web UI（默认）	HTTP
+
+
+#两个 jar 包冲突：
+SLF4J: Class path contains multiple SLF4J bindings.
+SLF4J: Found binding in [jar:file:/usr/local/hive4.0.1/lib/log4j-slf4j-impl-2.18.0.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+SLF4J: Found binding in [jar:file:/usr/local/hadoop3.3.6/share/hadoop/common/lib/slf4j-reload4j-1.7.36.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+SLF4J: See http://www.slf4j.org/codes.html#multiple_bindings for an explanation.
+SLF4J: Actual binding is of type [org.apache.logging.slf4j.Log4jLoggerFactory]
+其中
+log4j-slf4j-impl-2.18.0.jar (Hive)
+slf4j-reload4j-1.7.36.jar (Hadoop)
+删除hive的lib下面包
+cp /usr/local/hive4.0.1/lib/log4j-slf4j-impl-2.18.0.jar /usr/local/hive4.0.1/lib/log4j-slf4j-impl-2.18.0.jar.bk
+rm -rf /usr/local/hive4.0.1/lib/log4j-slf4j-impl-2.18.0.jar
+
+#关闭HBase时，输入stop-hbase.sh命令一直处于等待状态
+先输入
+hbase-daemon.sh stop master
+再输入
+stop-hbase.sh
+
+#java.lang.ClassNotFoundException：org.apache.hadoop.hbase.mapreduce.*
+yarn-site.sh中设置yarn.application.classpath
+
+
+#zookeeper端口冲突
+2024-10-28 20:54:38,665 ERROR [main] zookeeper.HQuorumPeer (HQuorumPeer.java:main(81)) - Failed to start ZKServer
+java.net.BindException: 地址已在使用
+设置hbase不使用自身带的zookeeper
+export HBASE_MANAGES_ZK=flase
+
+
+#Hive 的日志级别设置过低,导致输出了过多的调试信息
+going to print operations logs
+printed operations logs
+going to print operations logs
+printed operations logs
+going to print operations logs
+printed operations logs
+检查 hive-log4j2.properties 文件 (位于 HIVE_HOME/conf 或 /etc/hive/conf) 中的日志级别设置。
+尝试将日志级别设置为 WARN 或 ERROR，减少不必要的日志输出。
+logger.AmazonAws.name=com.amazonaws
+logger.AmazonAws.level = WARN
+logger.ApacheHttp.name=org.apache.http
+logger.ApacheHttp.level = WARN
