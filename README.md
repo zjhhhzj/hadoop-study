@@ -14,7 +14,7 @@
   https://dlcdn.apache.org/hive/hive-4.0.1/apache-hive-4.0.1-bin.tar.gz  
 
 ### 第一步：  
-  下载centos7，在VMware上安装，开启共享文件夹选项（取名为share，目录在/mnt/hgfs/share下）  
+  下载centos7，在VMware上安装，开启共享文件夹选项（取名为share，目录在/mnt/hgfs/share下），我的root密码为zj，按需求更改。
 
 ### 第二步：  
   运行put.bash，将基本文件上传  
@@ -29,7 +29,7 @@
   运行xml.bash，配置Hadoop，Hbase，Hive，Spark的配置文件
 
 ### 第六步：  
-  复制master节点，有master，master2，slave1，slave2，slave3五个服务器，复制好后在每个节点运行对应的网络初始化bash文件
+  复制master节点，有master，master2，slave1，slave2，slave3五个服务器，复制好后在每个节点运行对应的网络初始化bash文件，最后每个节点运行ssh.bash文件，完成网络通信
 
 ### 第七步： 
   在slave1，slave2，slave3中运行zookeeper.bash，注意echo '1' > data/myid中的1根据slave后面编号变化为1，2，3。
