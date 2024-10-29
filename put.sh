@@ -1,7 +1,3 @@
-rm -rf t.bash
-vim t.bash
-bash t.bash
-
 # 进入centos共享文件夹
 cd /mnt/hgfs/share
 
@@ -45,7 +41,24 @@ extract_and_move "apache-zookeeper-3.8.4-bin.tar.gz" "/usr/local/" "zookeeper3.8
 extract_and_move "hadoop-3.3.6.tar.gz" "/usr/local/" "hadoop3.3.6"
 extract_and_move "apache-hive-4.0.1-bin.tar.gz" "/usr/local/" "hive4.0.1"
 extract_and_move "hbase-3.0.0-beta-1-bin.tar.gz" "/usr/local/" "hbase3.0.0"
-
-
-
+extract_and_move "apache-tomcat-9.0.96.tar.gz" "/usr/local/" "tomcat9"
+extract_and_move "spark-3.5.3-bin-hadoop3.tgz" "/usr/local/" "spark3.5.3"
 echo "文件增加操作完成。"
+
+cp /mnt/hgfs/share/mysql-connector-j-9.0.0.jar /usr/local/hive4.0.1/lib/
+echo "hive增加jdbc包"
+
+cp /mnt/hgfs/share/hive-site.xml /usr/local/hive4.0.1/conf/hive-site.xml
+echo "hive-site.xml配置完成"
+
+
+
+#解决hive和hadoop包冲突
+cd /usr/local/hive4.0.1/lib
+cp  log4j-slf4j-impl-2.18.0.jar log4j-slf4j-impl-2.18.0.jar.bk
+rm -rf log4j-slf4j-impl-2.18.0.jar
+
+
+#解决hbase和hadoop包冲突
+cp  $HBASE_HOME/lib/client-facing-thirdparty/log4j-slf4j-impl-2.17.2.jar $HBASE_HOME/lib/client-facing-thirdparty/log4j-slf4j-impl-2.17.2.jar.bk
+rm -rf $HBASE_HOME/lib/client-facing-thirdparty/log4j-slf4j-impl-2.17.2.jar
