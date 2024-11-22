@@ -287,6 +287,10 @@ cat <<EOL > hbase-site.xml
     </property>
     <property>
       <name>hbase.master.port</name>
+      <value>16000</value>
+    </property>
+        <property>
+      <name>hbase.regionserver.port</name>
       <value>61000</value>
     </property>
 
