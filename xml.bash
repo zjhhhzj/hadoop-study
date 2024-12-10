@@ -68,7 +68,10 @@ cat <<EOL > core-site.xml
 EOL
 echo "core-site.xml 配置完成。"
 
-cat <<EOF >> hdfs-site.xml
+cat <<EOF > hdfs-site.xml
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+
 <configuration>
     <property>
         <name>dfs.ha.automatic-failover.enabled</name>
@@ -128,7 +131,10 @@ cat <<EOF >> hdfs-site.xml
 EOF
 echo "hdfs-site.xml 配置完成。"
 
-cat <<EOL >> mapred-site.xml
+cat <<EOL > mapred-site.xml
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+
 <configuration>
     <property>
         <name>mapreduce.framework.name</name>
@@ -146,7 +152,10 @@ cat <<EOL >> mapred-site.xml
 EOL
 echo "mapred-site.xml 配置完成。"
 
-cat <<EOL >> yarn-site.xml
+cat <<EOL > yarn-site.xml
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+
 <configuration>
     <property>
         <name>yarn.resourcemanager.ha.enabled</name>

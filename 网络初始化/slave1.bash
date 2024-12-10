@@ -26,6 +26,15 @@ GATEWAY="192.168.209.2"
 DNS1="192.168.209.2"
 DNS2="114.114.114.114"
 EOL
+cat <<EOL > /etc/hosts
+#127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+#::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+192.168.209.101 master
+192.168.209.102 master2
+192.168.209.111 slave1
+192.168.209.112 slave2
+192.168.209.113 slave3 
+EOL
 
 service network restart
 

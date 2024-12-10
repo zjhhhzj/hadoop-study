@@ -12,4 +12,6 @@ cd /usr/local/zookeeper3.8.4/
 mkdir -p data
 echo '1' > data/myid
 
+#cat /usr/local/zookeeper3.8.4/data/myid
+#cat /usr/local/zookeeper3.8.4/conf/zoo.cfg
 
