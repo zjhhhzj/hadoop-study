@@ -7,6 +7,7 @@
   hive-4.0.0  
 
   选择以下链接**下载**  
+  https://mirrors.huaweicloud.com/centos/7/isos/x86_64/CentOS-7-x86_64-DVD-2207-02.iso (清华源已经不支持)
   https://dlcdn.apache.org/hadoop/common/hadoop-3.3.6/hadoop-3.3.6.tar.gz  
   https://www.oracle.com/cn/java/technologies/javase/javase8-archive-downloads.html （需要自己创建账号）  
   https://dlcdn.apache.org/zookeeper/zookeeper-3.8.4/apache-zookeeper-3.8.4-bin.tar.gz  
