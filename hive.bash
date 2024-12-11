@@ -16,5 +16,8 @@ hive
 !connect jdbc:hive2://master:10000 root 123456
 #启动2
 beeline --verbose=true -u jdbc:hive2://master:10000 -n root
+beeline -u jdbc:hive2://master:10000 -n root
 
-
+#内存不足,不要自动将普通连接转换为mapjoin or 优化不好导致在新版本语义出现问题
+#设置此选项可使用join语句
+SET hive.auto.convert.join=false;

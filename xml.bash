@@ -138,7 +138,7 @@ cat <<EOL > mapred-site.xml
 <configuration>
     <property>
         <name>mapreduce.framework.name</name>
-        <value>yarn</value>
+        <value>yarn-tez</value>
     </property>
     <property>
         <name>mapreduce.jobhistory.address</name>
@@ -348,6 +348,10 @@ echo "Hive配置完成。"
 
 ######################################################################################################################################################
 cd /usr/local/spark3.5.3/conf
+
+cp /usr/local/hive4.0.1/conf/hive-site.xml  /usr/local/spark3.5.3/conf/
+cp /usr/local/hadoop3.3.6/etc/hadoop/core-site.xml  /usr/local/spark3.5.3/conf/
+cp /usr/local/hadoop3.3.6/etc/hadoop/hdfs-site.xml  /usr/local/spark3.5.3/conf/
 
 cat <<EOL > spark-env.sh
 export SPARK_MASTER_HOST=master

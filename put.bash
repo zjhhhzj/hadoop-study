@@ -43,6 +43,7 @@ extract_and_move "apache-hive-4.0.1-bin.tar.gz" "/usr/local/" "hive4.0.1"
 extract_and_move "hbase-3.0.0-beta-1-bin.tar.gz" "/usr/local/" "hbase3.0.0"
 extract_and_move "apache-tomcat-9.0.96.tar.gz" "/usr/local/" "tomcat9"
 extract_and_move "spark-3.5.3-bin-hadoop3.tgz" "/usr/local/" "spark3.5.3"
+extract_and_move "apache-tez-0.10.4-bin.tar.gz" "/usr/local/" "tez0.10.4"
 echo "文件增加操作完成。"
 
 cp /mnt/hgfs/share/mysql-connector-j-* /usr/local/hive4.0.1/lib/

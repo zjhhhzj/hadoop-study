@@ -5,7 +5,9 @@
   zookeeper-3.8.4  
   hbase-3.0.0  
   hive-4.0.0  
-
+  spark-3.5.3
+  tez-0.10.4
+  tomcat-9.0.96(注意10及以上版本不支持jdk8)
   选择以下链接**下载**  
   https://mirrors.huaweicloud.com/centos/7/isos/x86_64/CentOS-7-x86_64-DVD-2207-02.iso (清华源已经不支持)
   https://dlcdn.apache.org/hadoop/common/hadoop-3.3.6/hadoop-3.3.6.tar.gz  
@@ -14,6 +16,7 @@
   https://dlcdn.apache.org/hbase/3.0.0-beta-1/hbase-3.0.0-beta-1-bin.tar.gz  
   https://dlcdn.apache.org/hive/hive-4.0.1/apache-hive-4.0.1-bin.tar.gz  
   https://downloads.mysql.com/archives/get/p/3/file/mysql-connector-j-9.0.0.zip(jdbc包解压取出jar包)
+  https://dlcdn.apache.org/tez/0.10.4/apache-tez-0.10.4-bin.tar.gz
 ### 第一步：  
   下载centos7，在VMware上安装，开启共享文件夹选项（取名为share，目录在/mnt/hgfs/share下），我的root密码为zj，按需求更改。
 
@@ -61,5 +64,6 @@
 
 ### 总结
   还是要多看看官方文档，一部分的错误记录在log.txt上，tomcat还没完善，但是应该可以基本使用，spark也是暂时Standalone模式，等以后学校课程有要求再研究吧
+  至于tez，本来想在hive上配置，但感觉是虚拟机配置给低了，mr就凑合着用吧
 
   

@@ -40,6 +40,10 @@ export PATH=\$PATH:\$HBASE_HOME/bin
 
 export SPARK_HOME=/usr/local/spark3.5.3
 export PATH=\$PATH:\$SPARK_HOME/bin
+export LD_LIBRARY_PATH=\$HADOOP_HOME/lib/native:\$LD_LIBRARY_PATH
+
+export TEZ_HOME=/usr/local/tez0.10.4
+export PATH=\$PATH:/usr/local/tez0.10.4/bin
 EOL
 
 #默认3.3.6
