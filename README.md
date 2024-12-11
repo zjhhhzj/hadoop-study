@@ -13,7 +13,7 @@
   https://dlcdn.apache.org/zookeeper/zookeeper-3.8.4/apache-zookeeper-3.8.4-bin.tar.gz  
   https://dlcdn.apache.org/hbase/3.0.0-beta-1/hbase-3.0.0-beta-1-bin.tar.gz  
   https://dlcdn.apache.org/hive/hive-4.0.1/apache-hive-4.0.1-bin.tar.gz  
-  jdbc包
+  https://downloads.mysql.com/archives/get/p/3/file/mysql-connector-j-9.0.0.zip(jdbc包解压取出jar包)
 ### 第一步：  
   下载centos7，在VMware上安装，开启共享文件夹选项（取名为share，目录在/mnt/hgfs/share下），我的root密码为zj，按需求更改。
 
@@ -40,6 +40,7 @@
   每个zookeeper节点运行zkServer.sh start  
   用zkServer.sh status检查  
   成功后每个zookeeper节点运行hdfs --daemon start journalnode  
+
   在master上进行初始化
   hdfs namenode -format
   hdfs zkfc -formatZK  
@@ -47,7 +48,11 @@
   hadoop-daemon.sh start namenode
   在master2上备份
   hdfs namenode -bootstrapStandby 
-  可以根据zkCli.sh -server slave1:2181 》ls /hadoop-ha进行检测  
+
+  可以根据
+  zkCli.sh -server slave1:2181 
+  》ls /hadoop-ha进行检测  
+  
   准备启动hdfs等 start-all.sh   
   测试hadoop jar /usr/local/hadoop3.3.6/share/hadoop/mapreduce/hadoop-mapreduce-examples-3.3.6.jar pi 10 10
   

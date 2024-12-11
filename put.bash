@@ -45,7 +45,7 @@ extract_and_move "apache-tomcat-9.0.96.tar.gz" "/usr/local/" "tomcat9"
 extract_and_move "spark-3.5.3-bin-hadoop3.tgz" "/usr/local/" "spark3.5.3"
 echo "文件增加操作完成。"
 
-cp /mnt/hgfs/share/mysql-connector-j-9.0.0.jar /usr/local/hive4.0.1/lib/
+cp /mnt/hgfs/share/mysql-connector-j-* /usr/local/hive4.0.1/lib/
 echo "hive增加jdbc包"
 
 cp /mnt/hgfs/share/hive-site.xml /usr/local/hive4.0.1/conf/hive-site.xml
