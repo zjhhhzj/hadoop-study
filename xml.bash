@@ -138,7 +138,7 @@ cat <<EOL > mapred-site.xml
 <configuration>
     <property>
         <name>mapreduce.framework.name</name>
-        <value>yarn-tez</value>
+        <value>yarn</value>
     </property>
     <property>
         <name>mapreduce.jobhistory.address</name>
