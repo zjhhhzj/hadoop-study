@@ -1,0 +1,1 @@
+centos7已经废弃了，感觉还是ubuntu好用
