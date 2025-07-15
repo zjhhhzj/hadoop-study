@@ -1,0 +1,260 @@
+mysql -u root -p
+SET GLOBAL super_read_only = OFF;
+SET GLOBAL read_only = OFF;
+SHOW VARIABLES LIKE '%read_only%';
+exit;
+
+hdfs dfs -chmod -R 777 /user
+hdfs dfs -mkdir -p /spark-logs
+
+
+beeline -u jdbc:hive2://localhost:10000 -n root -p 123456
+
+create database zj_traffic;
+show databases;
+use zj_traffic;
+
+-- 创建Hive表case_data_sample_tmp
+create table `case_data_sample_tmp` (
+  `rank` int,
+  `dt` int,
+  `cookie` string,
+  `ip` string,
+  `idfa` string,
+  `imei` string,
+  `android` string,
+  `openudid` string,
+  `mac` string,
+  `timestamps` int,
+  `camp` int,
+  `creativeid` int,
+  `mobile_os` int,
+  `mobile_type` string,
+  `app_key_md5` string,
+  `app_name_md5` string,
+  `placementid` string,
+  `useragent` string,
+  `mediaid` string,
+  `os_type` string,
+  `born_time` int,
+  `label` int
+) ROW FORMAT DELIMITED 
+FIELDS TERMINATED BY ',' 
+ESCAPED BY '\\' 
+STORED AS TEXTFILE;
+
+
+-- 创建Hive表case_data_sample
+create table `case_data_sample` (
+  `rank` int,
+  `dt` int,
+  `cookie` string,
+  `ip` string,
+  `idfa` string,
+  `imei` string,
+  `android` string,
+  `openudid` string,
+  `mac` string,
+  `timestamps` int,
+  `camp` int,
+  `creativeid` int,
+  `mobile_os` int,
+  `mobile_type` string,
+  `app_key_md5` string,
+  `app_name_md5` string,
+  `placementid` string,
+  `useragent` string,
+  `mediaid` string,
+  `os_type` string,
+  `born_time` int,
+  `label` int
+) row format delimited fields terminated by ', ';
+
+
+
+1.删除文件首行
+sed -i '1d' /opt/case_data_new.csv
+
+
+2、导入数据至表case_data_sample_tmp
+use zj_traffic;
+load data local inpath '/opt/case_data_new.csv' into table case_data_sample_tmp;
+ 
+
+3、使用insert命令将表 case_data_sample_tmp 的数据导入表case_data_sample。 
+insert overwrite table case_data_sample select * from case_data_sample_tmp;
+
+
+4、导入成功后，可以使用“select * from case_data_sample limit 1;”命令查看表case_data_sample的第一行数据，如下图。
+select * from case_data_sample limit 10;
+
+ 
+
+5、生成样本数据表case_data。
+
+生成一份未进行类别标识的样本数据，以原始建模数据为基础，生成没有类别标签的样本数据。
+create table case_data2 as select rank,dt,cookie,ip,idfa,imei,android,openudid,
+mac,timestamps,
+camp,creativeid,mobile_os,mobile_type,app_key_md5,app_name_md5,placementid,
+useragent,mediaid,
+os_type,born_time from case_data_sample;
+
+
+cd /usr/local/spark3.3.4/sbin/
+./start-all.sh
+./start-history-server.sh
+
+spark-shell
+spark.sql("use zj_traffic");
+val df =spark.sql("select * from case_data_sample");
+df.show(3);
+
+
+import org.apache.spark.sql.SaveMode
+
+val data_new = spark.sqlContext.read.table("zj_traffic.case_data_sample").drop("mac").drop("creativeid").drop("mobile_os").drop("mobile_type").drop("app_key_md5").drop("app_name_md5").drop("os_type")
+
+data_new.write.mode(SaveMode.Overwrite).saveAsTable("zj_traffic.case_data_sample_new2")
+
+
+
+import org.apache.spark.sql.types._
+import org.apache.spark.sql.Row
+import org.apache.spark.sql.SaveMode
+// 定义特征的名称
+val timestamps="timestamps"
+val dt="dt"
+val cookie="cookie"
+val ip="ip"
+val N="N"
+val N1="N1"
+val N2="N2"
+val N3="N3"
+val ranks="rank"
+val data = spark.read.table("zj_traffic.case_data_sample_new")
+// 取出时间戳最大值、最小值
+val max_min_timestamp = data.select(max(col(timestamps)) as "max_ts",min(col(timestamps)) as "min_ts").rdd.collect
+val max_ts=max_min_timestamp(0).getInt(0)
+val min_ts=max_min_timestamp(0).getInt(1)
+// 以18000s切割时间区间
+val times=List.range(min_ts,max_ts,18000)
+
+println("时间分割点：" + times)
+// 计算每5h的特征值并合并
+for (i<- 0 to 4){
+   val data_sub={if(i==times.length-1){
+     data.filter("timestamps>="+times(i))
+     }
+   else{
+       data.filter("timestamps>="+times(i)+" and timestamps<"+times(i+1))
+       }
+   }
+   val data_N_sub = data_sub.groupBy(cookie,ip).agg(count(ip) as N).join(data_sub, Seq(cookie, ip), "inner").select(ranks, N)
+   val data_N1_sub = data_sub.groupBy(ip).agg(countDistinct(cookie) as N1).join(data_sub, Seq(ip), "inner").select(ranks, N1)
+   // 截取IP地址前两段作为一个新列
+   val data_ip_two = data_sub.withColumn("ip_two",substring_index(col(ip), ".", 2))
+   // 截取IP地址前三段作为一个新列
+   val data_ip_three=data_sub.withColumn("ip_three",substring_index(col(ip), ".", 3))
+   val data_N2_sub = data_ip_two.groupBy("ip_two").agg(count("ip_two") as N2).join(data_ip_two, Seq("ip_two"), "inner").select(ranks, N2)
+   val data_N3_sub = data_ip_three.groupBy("ip_three").agg(count("ip_three") as N3).join(data_ip_three, Seq("ip_three"), "inner").select(ranks, N3)
+   // 合并4个关键特征，以追加的方式保存至Hive表中
+   val data_model_N = data_N_sub.join(data_N1_sub,ranks).join(data_N2_sub,ranks).join(data_N3_sub,ranks)
+data_model_N.repartition(1).write.mode(SaveMode.Append).saveAsTable("zj_traffic.case_data_sample_model_N")
+}
+
+
+
+val data_model = spark.sqlContext.read.table("zj_traffic.case_data_sample_model_N").join(data, ranks).select(col(ranks), col(dt), col(N), col(N1), col(N2), col(N3), col("label").cast("double"))
+
+data_model.write.mode(SaveMode.Overwrite).saveAsTable("zj_traffic.case_data_sample_model")
+
+data_model.describe().show(false)
+
+select * from zj_traffic.case_data_sample_model_N limit 10;
+
+
+
+import org.apache.spark.ml.feature.VectorAssembler
+import org.apache.spark.ml.linalg.Vectors
+import org.apache.spark.ml.feature.MinMaxScaler
+import org.apache.spark.ml.linalg.Vectors
+import org.apache.spark.sql.DataFrame
+val scaledFeatures = "scaledFeatures"
+val ip="ip"
+val N="N"
+val N1="N1"
+val N2="N2"
+val N3="N3"
+val ranks="rank"
+val features="features"
+val data=spark.sqlContext.read.table("zj_traffic.case_data_sample_model")
+def getScaledData(data:DataFrame)={  
+    val assemble_data = new VectorAssembler().setInputCols(
+    Array(N, N1, N2, N3)).setOutputCol(features).transform(data)
+    val scaler = new MinMaxScaler().setInputCol(features).setOutputCol(scaledFeatures)
+    val scalerModel = scaler.fit(assemble_data)
+    val scaledData = scalerModel.transform(assemble_data)
+    scaledData
+}
+
+val scaledData = getScaledData(data)
+scaledData.select("label", "features", "scaledFeatures").show(5, false)
+
+import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.SaveMode
+
+val Array(trainingData, testData)=scaledData.randomSplit(Array(0.7, 0.3))
+
+trainingData.write.mode(SaveMode.Overwrite).saveAsTable("zj_traffic.trainingData2")
+testData.write.mode(SaveMode.Overwrite).saveAsTable("zj_traffic.testData2")
+
+println("模型训练数据量："+trainingData.count())
+println("模型加载数据量："+testData.count())
+
+//构建逻辑回归模型
+// 模型构建与预测
+import org.apache.spark.ml.Pipeline
+import org.apache.spark.ml.classification.LogisticRegressionModel
+import org.apache.spark.ml.classification.LogisticRegression
+import org.apache.spark.sql.DataFrame
+val Array(train, test) = trainingData.randomSplit(Array(0.7, 0.3))
+// 构建并训练逻辑回归模型
+val model_lr = new LogisticRegression().setElasticNetParam(0.03).setMaxIter(15).fit(train)
+// 保存模型
+model lr.write.overwrite().save("/user/root/lrModel")
+// 使用模型进行预测
+val predictions_lr = model_lr.transform(test)
+predictions_lr.select("label", "prediction").show(5, false)
+
+import org.apache.spark.ml.classification. (randomForestClassificationMode', 'RandomForestClassifier')
+val array(training, test) = trainingData.randomSplit(Array(0.7, 0.3))
+
+val rf = new RandomForestClassifier().setLabelCol("label").setFeaturesCol("scaledFeatures").setNumTrees(5)
+val model_rf = rf.fit(training)
+
+model_rf.write.overwrite().save("/user/root/rfModel")
+
+val predictions_rf = model_rf.transform(test)
+predictions_rf.select("label", "prediction").show(5, false)
+
+## 模型评估
+import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
+import org.apache.spark.mllib.evaluation.MulticlassMetrics
+val evaluator = new MulticlassClassificationEvaluator().setLabelCol(
+    "label").setPredictionCol("prediction").setMetricName("accuracy")
+val accuracy_lr = evaluator.evaluate(predictions_lr)
+val accuracy_rf = evaluator.evaluate(predictions_rf)
+val metrics_lr = new MulticlassMetrics(predictions_lr.select("prediction", "label").rdd.map(
+    t => (t.getDouble(), t.getDouble(1)))
+val metrics_rf = new MulticlassMetrics(predictions_rf.select("prediction", "label").rdd.map(
+    t => (t.getDouble(), t.getDouble(1)))
+println("逻辑回归模型评估：")
+println("准确率："+accuracy_lr)
+println("F1值："+metrics_lr.weightedFMeasure)
+println("精确率："+metrics_lr.weightedPrecision)
+println("召回率："+metrics_lr.weightedRecall)
+println("随机森林模型评估：")
+println("准确率："+accuracy_rf)
+println("F1值："+metrics_rf.weightedFMeasure)
+println("精确率："+metrics_rf.weightedPrecision)
+println("召回率："+metrics_rf.weightedRecall)
